@@ -96,7 +96,9 @@ google-api-core @ file:///C:/ci/google-api-core-split_1613980333946/work
 google-auth @ file:///tmp/build/80754af9/google-auth_1626320605116/work
 google-cloud-core @ file:///tmp/build/80754af9/google-cloud-core_1625077425256/work
 google-cloud-storage @ file:///tmp/build/80754af9/google-cloud-storage_1601307969662/work
-google-crc32c @ file:///opt/concourse/worker/volumes/live/65124554-6f08-4ab8-534c-257ad7c75cc4/volume/google-crc32c_1612242927048/work
+google-crc32c @ file:///opt/concourse/worker/volumes/live/65124554-6f08-4ab8-534c-257ad7c75cc4/
+gunicorn==19.7.1
+volume/google-crc32c_1612242927048/work
 google-resumable-media @ file:///tmp/build/80754af9/google-resumable-media_1624367812531/work
 googleapis-common-protos @ file:///opt/concourse/worker/volumes/live/dd3b9afd-2018-4302-7f5c-9afc1cc3e2ad/volume/googleapis-common-protos-feedstock_1617957631674/work
 greenlet @ file:///opt/concourse/worker/volumes/live/b27b4e9e-4697-4d57-403b-f82d36a391ca/volume/greenlet_1628888146890/work

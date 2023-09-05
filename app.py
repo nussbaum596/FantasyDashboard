@@ -238,7 +238,7 @@ if options == 'PF Summary':
 
 elif options == 'Power Rankings':
     
-    data_all = data_all.loc[data_all['Week'].between(week_slider[0], week_slider[1])]
+    data_all2 = data_all.loc[data_all['Week'].between(week_slider[0], week_slider[1])]
 #%%Power Rankings
 
 ##Wins/Losses
@@ -299,14 +299,14 @@ elif options == 'Power Rankings':
     #%%Power Indices
 
     power_indices = pd.DataFrame()
-    for i in range (1, data_all['Week'].max() + 1):
+    for i in range (1, data_all2['Week'].max() + 1):
         if i <= 3:
-            df = data_all[data_all['Week'] <= i]
+            df = data_all2[data_all2['Week'] <= i]
             df2 = power_rk(df, i)
             df2['Week'] = i
             df2 = df2[['Week', 'Name', 'Power Index']]
         elif i > 3:
-            df = data_all[data_all['Week'].between(i-2, i)]
+            df = data_all2[data_all2['Week'].between(i-2, i)]
             df2 = power_rk(df, i)
             df2['Week'] = i
             df2 = df2[['Week', 'Name', 'Power Index']]

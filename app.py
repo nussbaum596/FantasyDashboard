@@ -8,82 +8,86 @@ import streamlit as st
 espn_s2 = 'AEBHvGr8UvZ90jyjJqEUgCSMtgtBIwv6phHIA2clBxOpEgPUAL1CxQv30bNSqVg%2B3fQriA05sWm8Adr3riG2h8OwozFBJDd1fgK7TM14YHBSaITlwQo53I8CVKhX8jBJtnmZj4wC1BWl3KmQHt%2FEfO7l8OSOq8S0fP%2BUgeXqSeXUdIxeH9vIi9K1SZJukRw0spmKkuuO2akQo2zLPxSbWYd%2BYU%2FyBpSz2gUeYghoUACTUvHGdbF7sXaeNZEloLFsnemoVoSyo3xgqMv18YD7whDSHY1TG8J5VGIW5H0%2BW%2BgspRYTxfPyR2JgoZXJz%2F7uU2q%2FEMV5iEVCZDuIn76q6g5j'
 swid = '{E447B594-6872-47C9-87B5-946872B7C9F9}'
 
-league = espn.FantasyLeague(league_id = 657778, 
-                            year = 2022, 
-                            espn_s2 = espn_s2, 
-                            swid= swid)
- 
-#%%Data by team roster
-data = league.get_league_data()
+@st.cache_data
+def get_data():
+    league = espn.FantasyLeague(league_id = 657778, 
+                                year = 2022, 
+                                espn_s2 = espn_s2, 
+                                swid= swid)
+     
+    #%%Data by team roster
+    data = league.get_league_data()
+    
+    #%%Data by Matchup
+    data2 = league.get_matchup_data()
+    data2 = data2.drop_duplicates()
+    data2 = data2[data2['Week'] <=14]
+    
+    #%%Data by Player
+    custom_headers = {
+    'Connection': 'keep-alive',
+     'Accept': 'application/json, text/plain, */*',
+      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36',
+      'x-fantasy-filter': '{"filterActive":null}',
+      'x-fantasy-platform': 'kona-PROD-1dc40132dc2070ef47881dc95b633e62cebc9913',
+      'x-fantasy-source': 'kona'
+     }
+     
+    url = "https://fantasy.espn.com/apis/v3/games/ffl/seasons/2022/players?scoringPeriodId=0&view=players_wl"
+    r = requests.get(url, 
+                      cookies = {"swid": swid, "espn_s2": espn_s2}, 
+                      headers=custom_headers)
+    player_data = r.json()
+    data3 = pd.DataFrame(player_data)
+    data3 = data3[data3['defaultPositionId'].isin([1,2,3,4,5,16])][['fullName', 'defaultPositionId']]
+    data3.columns = ['PlayerName', 'ActualPosition']
+    data3['ActualPosition'] = data3['ActualPosition'].map({1: 'QB', 2: 'RB', 3: 'WR', 4: 'TE', 5:'K', 16:'D/ST'})
+     
+    data4 = data.merge(data3, how='left', on='PlayerName')
+    data4 = data4.drop_duplicates()
+    data4 = data4[data4['Week'] <=14]
+    data4['FullName'] = data4['FullName'].str.title().replace(r'\s+', ' ', regex=True)
+    data4['FullName'] = data4['FullName'].replace('Daniel Mcknight', 'Daniel McKnight')
+    data4 = data4.rename(columns = {'FullName': 'Name'})
+    
+    #Replacing Team names with Actual names for matchup data
+    team_names = data4[['Name', 'TeamName']].drop_duplicates()
+    data2 = data2.merge(team_names, how='left', left_on = 'Name1', right_on = 'TeamName')
+    data2 = data2.drop(['Name1', 'TeamName'], axis=1)
+    data2 = data2.rename(columns = {'Name': 'Name1'})
+    data2 = data2.merge(team_names, how='left', left_on = 'Name2', right_on = 'TeamName')
+    data2 = data2.drop(['Name2', 'TeamName'], axis=1)
+    data2 = data2.rename(columns = {'Name': 'Name2'})
 
-#%%Data by Matchup
-data2 = league.get_matchup_data()
-data2 = data2.drop_duplicates()
-data2 = data2[data2['Week'] <=14]
+    ##Creating New Dataset with PF/PA
+    pf1 = data2[['Week', 'Name1', 'Score1']]
+    pf1.columns = ['Week', 'Name', 'PF']
+    pf2 = data2[['Week', 'Name2', 'Score2']]
+    pf2.columns = ['Week', 'Name', 'PF']
+    pf = pd.concat([pf1, pf2])
 
-#%%Data by Player
-custom_headers = {
-'Connection': 'keep-alive',
- 'Accept': 'application/json, text/plain, */*',
-  'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36',
-  'x-fantasy-filter': '{"filterActive":null}',
-  'x-fantasy-platform': 'kona-PROD-1dc40132dc2070ef47881dc95b633e62cebc9913',
-  'x-fantasy-source': 'kona'
- }
+    pa1 = data2[['Week', 'Name1', 'Score2']]
+    pa1.columns = ['Week', 'Name', 'PA']
+    pa2 = data2[['Week', 'Name2', 'Score1']]
+    pa2.columns = ['Week', 'Name', 'PA']
+    pa = pd.concat([pa1, pa2])
+
+    #Merging Everything Together in One Giant Dataset
+    data_all = data4.merge(pf, how='left', on = ['Week', 'Name'])
+    data_all = data_all.merge(pa, how='left', on = ['Week', 'Name'])
+    data_all = data_all.merge(pf, how='left', left_on = ['Week', 'PA'], right_on = ['Week', 'PF'])
+    data_all = data_all.drop(['PF_y'], axis=1)
+    data_all = data_all.rename(columns = {'Name_x': 'Name', 'PF_x': 'PF', 'Name_y': 'Opponent'})
+    return data_all
  
-url = "https://fantasy.espn.com/apis/v3/games/ffl/seasons/2022/players?scoringPeriodId=0&view=players_wl"
-r = requests.get(url, 
-                  cookies = {"swid": swid, "espn_s2": espn_s2}, 
-                  headers=custom_headers)
-player_data = r.json()
-data3 = pd.DataFrame(player_data)
-data3 = data3[data3['defaultPositionId'].isin([1,2,3,4,5,16])][['fullName', 'defaultPositionId']]
-data3.columns = ['PlayerName', 'ActualPosition']
-data3['ActualPosition'] = data3['ActualPosition'].map({1: 'QB', 2: 'RB', 3: 'WR', 4: 'TE', 5:'K', 16:'D/ST'})
- 
-data4 = data.merge(data3, how='left', on='PlayerName')
-data4 = data4.drop_duplicates()
-data4 = data4[data4['Week'] <=14]
-data4['FullName'] = data4['FullName'].str.title().replace(r'\s+', ' ', regex=True)
-data4['FullName'] = data4['FullName'].replace('Daniel Mcknight', 'Daniel McKnight')
-data4 = data4.rename(columns = {'FullName': 'Name'})
- 
- 
+data_all = get_data()
+
 st.title('For Monetary Reward Dashboard')
 
 st.write("""
          This dashboard is for keeping track of interesting stats throughout the fantasy season including PF leaders (overall and by position),
          coach ratings, and power rankings. You can filter the stats by week ranges and teams, and these stats will be updated weekly. Have fun!
          """)
-
-#Replacing Team names with Actual names for matchup data
-team_names = data4[['Name', 'TeamName']].drop_duplicates()
-data2 = data2.merge(team_names, how='left', left_on = 'Name1', right_on = 'TeamName')
-data2 = data2.drop(['Name1', 'TeamName'], axis=1)
-data2 = data2.rename(columns = {'Name': 'Name1'})
-data2 = data2.merge(team_names, how='left', left_on = 'Name2', right_on = 'TeamName')
-data2 = data2.drop(['Name2', 'TeamName'], axis=1)
-data2 = data2.rename(columns = {'Name': 'Name2'})
-
-##Creating New Dataset with PF/PA
-pf1 = data2[['Week', 'Name1', 'Score1']]
-pf1.columns = ['Week', 'Name', 'PF']
-pf2 = data2[['Week', 'Name2', 'Score2']]
-pf2.columns = ['Week', 'Name', 'PF']
-pf = pd.concat([pf1, pf2])
-
-pa1 = data2[['Week', 'Name1', 'Score2']]
-pa1.columns = ['Week', 'Name', 'PA']
-pa2 = data2[['Week', 'Name2', 'Score1']]
-pa2.columns = ['Week', 'Name', 'PA']
-pa = pd.concat([pa1, pa2])
-
-#Merging Everything Together in One Giant Dataset
-data_all = data4.merge(pf, how='left', on = ['Week', 'Name'])
-data_all = data_all.merge(pa, how='left', on = ['Week', 'Name'])
-data_all = data_all.merge(pf, how='left', left_on = ['Week', 'PA'], right_on = ['Week', 'PF'])
-data_all = data_all.drop(['PF_y'], axis=1)
-data_all = data_all.rename(columns = {'Name_x': 'Name', 'PF_x': 'PF', 'Name_y': 'Opponent'})
 
 #%%Adding Options and Filters
 

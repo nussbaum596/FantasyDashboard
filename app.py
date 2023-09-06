@@ -229,7 +229,7 @@ if options == 'PF Summary':
     st.write("""
              This rating compares your actual lineup to your best possible lineup. For example, if your coach rating is a 95,
              then your lineup scored 95 points when 100 points were possible from your best lineup. The best possible lineup includes your best QB,
-             2 best RBs, 2 best WRs, best TE, next best RB/WR/TE as your FLEX, and your best K.
+             2 best RBs, 2 best WRs, best TE, next best RB/WR/TE as your FLEX, your best D/ST, and your best K.
              """)
     coach_table = coach[['Name', 'Coach Rating']]
     coach_table = coach_table.sort_values('Coach Rating', ascending=False)

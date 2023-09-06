@@ -255,6 +255,8 @@ elif options == 'Power Rankings':
                                      records['PF'] > records['PA'], records['Opponent'], np.nan))
         wins = records['Winner'].value_counts().reset_index()
         losses = records['Loser'].value_counts().reset_index()
+        st.write(wins.columns)
+        st.write(losses.columns)
         for team in df['Name'].unique():
             if team not in wins['index'].unique():
                 wins = pd.concat([wins, pd.DataFrame({'index': [team], 'Winner': [0]})])

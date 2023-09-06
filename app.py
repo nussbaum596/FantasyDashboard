@@ -262,7 +262,9 @@ elif options == 'Power Rankings':
                 wins = pd.concat([wins, pd.DataFrame({'Winner': [team], 'count': [0]})])
             if team not in losses['Loser'].unique():
                 losses = pd.concat([losses, pd.DataFrame({'Loser': [team], 'count': [0]})])
-        wins_losses = wins.merge(losses, how='left', left_on='Winner', right_on = 'Loser')
+        wins.columns = ['index', 'Winner']
+        losses.columns = ['index', 'Loser']
+        wins_losses = wins.merge(losses, how='left', on='index')
         wins_losses.columns = ['Name', 'Wins', 'Losses']
         wins_losses['Wins'] = wins_losses['Wins']/2
         wins_losses['Losses'] = wins_losses['Losses']/2

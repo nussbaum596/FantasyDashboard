@@ -7,19 +7,33 @@ import streamlit as st
 
 
 
-espn_s2 = 'AEBHvGr8UvZ90jyjJqEUgCSMtgtBIwv6phHIA2clBxOpEgPUAL1CxQv30bNSqVg%2B3fQriA05sWm8Adr3riG2h8OwozFBJDd1fgK7TM14YHBSaITlwQo53I8CVKhX8jBJtnmZj4wC1BWl3KmQHt%2FEfO7l8OSOq8S0fP%2BUgeXqSeXUdIxeH9vIi9K1SZJukRw0spmKkuuO2akQo2zLPxSbWYd%2BYU%2FyBpSz2gUeYghoUACTUvHGdbF7sXaeNZEloLFsnemoVoSyo3xgqMv18YD7whDSHY1TG8J5VGIW5H0%2BW%2BgspRYTxfPyR2JgoZXJz%2F7uU2q%2FEMV5iEVCZDuIn76q6g5j'
-swid = '{E447B594-6872-47C9-87B5-946872B7C9F9}'
+#espn_s2 = 'AEBHvGr8UvZ90jyjJqEUgCSMtgtBIwv6phHIA2clBxOpEgPUAL1CxQv30bNSqVg%2B3fQriA05sWm8Adr3riG2h8OwozFBJDd1fgK7TM14YHBSaITlwQo53I8CVKhX8jBJtnmZj4wC1BWl3KmQHt%2FEfO7l8OSOq8S0fP%2BUgeXqSeXUdIxeH9vIi9K1SZJukRw0spmKkuuO2akQo2zLPxSbWYd%2BYU%2FyBpSz2gUeYghoUACTUvHGdbF7sXaeNZEloLFsnemoVoSyo3xgqMv18YD7whDSHY1TG8J5VGIW5H0%2BW%2BgspRYTxfPyR2JgoZXJz%2F7uU2q%2FEMV5iEVCZDuIn76q6g5j'
+#swid = '{E447B594-6872-47C9-87B5-946872B7C9F9}'
+st.title('Fantasy Stats Dashboard')
+
+st.write("""
+         Instructions to find your league's ESPN_S2 and SWID cookie values can be found [here](https://www.gamedaybot.com/help/espn_s2-and-swid/)
+         """)
 
 league_id = st.text_input(
     label = 'Please enter your League ID',
     max_chars=10,
     placeholder='League ID here')
 
+espn_s2 = st.text_input(
+    label = 'Please enter your ESPN_S2 cookie value',
+    max_chars=500,
+    placeholder='ESPN_S2 cookie value here')
+
+swid = st.text_input(
+    label = 'Please enter your SWID cookie value',
+    max_chars=50,
+    placeholder='SWID cookie value here')
+
 if league_id:
-    st.title('Fantasy Stats Dashboard')
     
     @st.cache_data
-    def get_data(year):
+    def get_data(league_id, espn_s2, swid):
         league = espn.FantasyLeague(league_id = league_id, 
                                     year = 2022, 
                                     espn_s2 = espn_s2, 
@@ -89,7 +103,7 @@ if league_id:
         data_all = data_all.rename(columns = {'Name_x': 'Name', 'PF_x': 'PF', 'Name_y': 'Opponent'})
         return data_all
      
-    data_all = get_data(league_id)
+    data_all = get_data(league_id, espn_s2, swid)
     
     st.write("""
              This dashboard is for keeping track of interesting stats throughout the fantasy season including PF leaders (overall and by position),

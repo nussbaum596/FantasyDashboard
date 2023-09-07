@@ -10,11 +10,10 @@ import streamlit as st
 espn_s2 = 'AEBHvGr8UvZ90jyjJqEUgCSMtgtBIwv6phHIA2clBxOpEgPUAL1CxQv30bNSqVg%2B3fQriA05sWm8Adr3riG2h8OwozFBJDd1fgK7TM14YHBSaITlwQo53I8CVKhX8jBJtnmZj4wC1BWl3KmQHt%2FEfO7l8OSOq8S0fP%2BUgeXqSeXUdIxeH9vIi9K1SZJukRw0spmKkuuO2akQo2zLPxSbWYd%2BYU%2FyBpSz2gUeYghoUACTUvHGdbF7sXaeNZEloLFsnemoVoSyo3xgqMv18YD7whDSHY1TG8J5VGIW5H0%2BW%2BgspRYTxfPyR2JgoZXJz%2F7uU2q%2FEMV5iEVCZDuIn76q6g5j'
 swid = '{E447B594-6872-47C9-87B5-946872B7C9F9}'
 
-league_id = 657778
-##league_id = st.text_input(
-    ##label = 'Please enter your League ID',
-    ##max_chars=10,
-    ##placeholder='League ID here')
+league_id = st.text_input(
+    label = 'Please enter your League ID',
+    max_chars=10,
+    placeholder='League ID here')
 
 if league_id:
     st.title('Fantasy Stats Dashboard')
@@ -226,7 +225,7 @@ if league_id:
         scores = scores.drop_duplicates()
         
         scores['PF Rank'] = scores.groupby('Week')['PF'].rank(ascending=False)
-        pf_exp = round((((scores['Week'].max() - scores['Week'].min() + 1)*12) - scores.groupby('Name')['PF Rank'].sum())/11,2).reset_index()
+        pf_exp = round((((scores['Week'].max() - scores['Week'].min() + 1)*data_all['Name'].nunique()) - scores.groupby('Name')['PF Rank'].sum())/(data_all['Name'].nunique()-1),2).reset_index()
         pf_exp.columns = ['Name', 'Expected Wins']
         
         wins_actexp = wins.merge(pf_exp, how='left', on='Name')
@@ -322,9 +321,9 @@ if league_id:
             
             scores['PF Rank'] = scores.groupby('Week')['PF'].rank(ascending=False)
             scores['PA Rank'] = scores.groupby('Week')['PA'].rank(ascending=False)
-            pf_exp = round(((wk*12) - scores.groupby('Name')['PF Rank'].sum())/11,2).reset_index()
+            pf_exp = round(((wk*data_all['Name'].nunique()) - scores.groupby('Name')['PF Rank'].sum())/data_all['Name'].nunique() - ,2).reset_index()
             pf_exp.columns = ['Name', 'PF Exp Wins']
-            pa_exp = round(wk - ((wk*12) - scores.groupby('Name')['PA Rank'].sum())/11,2).reset_index()
+            pa_exp = round(wk - ((wk*data_all['Name'].nunique()) - scores.groupby('Name')['PA Rank'].sum())/data_all['Name'].nunique() - 1,2).reset_index()
             pa_exp.columns = ['Name', 'PA Exp Wins']
             
             total_pf2 = df[(df['PlayerRosterSlot'] != 'Bench') & (df['Week'] <= wk)].groupby('Name')['PlayerScoreActual'].agg('sum').reset_index().sort_values('PlayerScoreActual', ascending=False)
@@ -339,9 +338,9 @@ if league_id:
             power['Wins Above PA'] = power['Wins'] - power['PA Exp Wins']
             power['SoS'] = power['PA Exp Wins'].rank(ascending=False)
             power['SoR'] = power['Avg Win Diff'].rank(ascending=False)
-            power['Power PF'] = round(-(power['PF'] - power['PF'].min()) / (power['PF'].max() - power['PF'].min())*11 + 12,2)
-            power['Power Exp Wins'] = round(-(power['PF Exp Wins'] - power['PF Exp Wins'].min()) / (power['PF Exp Wins'].max() - power['PF Exp Wins'].min())*11 + 12,2)
-            power['Power Wins Above PA'] = round(-(power['Wins Above PA'] - power['Wins Above PA'].min()) / (power['Wins Above PA'].max() - power['Wins Above PA'].min())*11 + 12,2)
+            power['Power PF'] = round(-(power['PF'] - power['PF'].min()) / (power['PF'].max() - power['PF'].min())*(data_all['Name'].nunique()-1) + data_all['Name'].nunique(),2)
+            power['Power Exp Wins'] = round(-(power['PF Exp Wins'] - power['PF Exp Wins'].min()) / (power['PF Exp Wins'].max() - power['PF Exp Wins'].min())*(data_all['Name'].nunique()-1) + data_all['Name'].nunique(),2)
+            power['Power Wins Above PA'] = round(-(power['Wins Above PA'] - power['Wins Above PA'].min()) / (power['Wins Above PA'].max() - power['Wins Above PA'].min())*(data_all['Name'].nunique()-1) + data_all['Name'].nunique(),2)
             power['Power Index'] = 0.3*power['Power PF'] + 0.4*power['Power Exp Wins'] + 0.3*power['Power Wins Above PA']
             power['Power Rank'] = power['Power Index'].rank()
             return power
@@ -376,7 +375,7 @@ if league_id:
                  
                  Double click on a name to see that person's individual line. From there you can click on other names to compare lines. 
                  """)
-        fig = px.line(power_indices, x='Week', y='Power Index', color='Name', range_y = [12, 1], markers=True, color_discrete_sequence=px.colors.qualitative.Dark24)
+        fig = px.line(power_indices, x='Week', y='Power Index', color='Name', range_y = [data_all['Name'].nunique(), 1], markers=True, color_discrete_sequence=px.colors.qualitative.Dark24)
         fig.update_layout(xaxis={"dtick":1})
         fig.update_layout(yaxis={"dtick":1})
         st.plotly_chart(fig, use_container_width = True)

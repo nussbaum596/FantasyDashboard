@@ -6,9 +6,6 @@ import plotly.express as px
 import streamlit as st
 
 
-
-#espn_s2 = 'AEBHvGr8UvZ90jyjJqEUgCSMtgtBIwv6phHIA2clBxOpEgPUAL1CxQv30bNSqVg%2B3fQriA05sWm8Adr3riG2h8OwozFBJDd1fgK7TM14YHBSaITlwQo53I8CVKhX8jBJtnmZj4wC1BWl3KmQHt%2FEfO7l8OSOq8S0fP%2BUgeXqSeXUdIxeH9vIi9K1SZJukRw0spmKkuuO2akQo2zLPxSbWYd%2BYU%2FyBpSz2gUeYghoUACTUvHGdbF7sXaeNZEloLFsnemoVoSyo3xgqMv18YD7whDSHY1TG8J5VGIW5H0%2BW%2BgspRYTxfPyR2JgoZXJz%2F7uU2q%2FEMV5iEVCZDuIn76q6g5j'
-#swid = '{E447B594-6872-47C9-87B5-946872B7C9F9}'
 st.title('Fantasy Stats Dashboard')
 
 st.write("""

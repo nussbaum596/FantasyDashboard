@@ -321,7 +321,7 @@ if league_id:
             
             scores['PF Rank'] = scores.groupby('Week')['PF'].rank(ascending=False)
             scores['PA Rank'] = scores.groupby('Week')['PA'].rank(ascending=False)
-            pf_exp = round(((wk*data_all['Name'].nunique()) - scores.groupby('Name')['PF Rank'].sum())/data_all['Name'].nunique() - ,2).reset_index()
+            pf_exp = round(((wk*data_all['Name'].nunique()) - scores.groupby('Name')['PF Rank'].sum())/data_all['Name'].nunique() - 1,2).reset_index()
             pf_exp.columns = ['Name', 'PF Exp Wins']
             pa_exp = round(wk - ((wk*data_all['Name'].nunique()) - scores.groupby('Name')['PA Rank'].sum())/data_all['Name'].nunique() - 1,2).reset_index()
             pa_exp.columns = ['Name', 'PA Exp Wins']

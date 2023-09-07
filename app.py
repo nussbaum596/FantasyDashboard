@@ -10,10 +10,11 @@ import streamlit as st
 espn_s2 = 'AEBHvGr8UvZ90jyjJqEUgCSMtgtBIwv6phHIA2clBxOpEgPUAL1CxQv30bNSqVg%2B3fQriA05sWm8Adr3riG2h8OwozFBJDd1fgK7TM14YHBSaITlwQo53I8CVKhX8jBJtnmZj4wC1BWl3KmQHt%2FEfO7l8OSOq8S0fP%2BUgeXqSeXUdIxeH9vIi9K1SZJukRw0spmKkuuO2akQo2zLPxSbWYd%2BYU%2FyBpSz2gUeYghoUACTUvHGdbF7sXaeNZEloLFsnemoVoSyo3xgqMv18YD7whDSHY1TG8J5VGIW5H0%2BW%2BgspRYTxfPyR2JgoZXJz%2F7uU2q%2FEMV5iEVCZDuIn76q6g5j'
 swid = '{E447B594-6872-47C9-87B5-946872B7C9F9}'
 
-league_id = st.text_input(
-    label = 'Please enter your League ID',
-    max_chars=10,
-    placeholder='League ID here')
+league_id = 657778
+##league_id = st.text_input(
+    ##label = 'Please enter your League ID',
+    ##max_chars=10,
+    ##placeholder='League ID here')
 
 if league_id:
     st.title('Fantasy Stats Dashboard')
@@ -187,7 +188,7 @@ if league_id:
         coach['CR Rank'] = coach['Coach Rating'].rank(ascending=False)
         
         #%%PF/PA Bar Chart
-        st.header('Total PF')
+        st.header('Total PF/PA')
         
     
         pf_chart = data_all[['Name', 'PF', 'PA']]
@@ -202,10 +203,52 @@ if league_id:
         fig = px.bar(pf_chart, x = 'Name', y = 'Points', color = 'Points Category', barmode='group', color_discrete_sequence=px.colors.qualitative.G10)
         st.plotly_chart(fig, use_container_width = True)
     
-        #%%Positional Leaders (Top 3 for each)
-        #st.header('Positional Leaders')
+        #%%Actual vs Expected Wins
+        st.header('Actual vs Expected Wins')
+        
+        st.write("""
+                 Expected Wins are calculated based on Weekly PF compared to all other weekly scores. Teams above the line 
+                 are considered "lucky" while teams below the line are considered "unlucky".
+                 """)
+        
+        records = data_all[['Week', 'Name', 'PF', 'Opponent', 'PA']]
+        records = records.drop_duplicates()
+        records['Winner'] = np.where(records['PF'] > records['PA'], records['Name'], np.where(
+                                     records['PA'] > records['PF'], records['Opponent'], np.nan))
+        wins = records['Winner'].value_counts().reset_index()
+        wins.columns = ['Name', 'Actual Wins']
+        for team in data_all['Name'].unique():
+                if team not in wins['Name'].unique():
+                    wins = pd.concat([wins, pd.DataFrame({'Name': [team], 'Actual Wins': [0]})])
+        wins['Actual Wins'] = wins['Actual Wins']/2
+        
+        scores = data_all[['Week', 'Name', 'PF', 'PA']]
+        scores = scores.drop_duplicates()
+        
+        scores['PF Rank'] = scores.groupby('Week')['PF'].rank(ascending=False)
+        pf_exp = round((((scores['Week'].max() - scores['Week'].min() + 1)*12) - scores.groupby('Name')['PF Rank'].sum())/11,2).reset_index()
+        pf_exp.columns = ['Name', 'Expected Wins']
+        
+        wins_actexp = wins.merge(pf_exp, how='left', on='Name')
+        customdata = np.stack((wins_actexp['Name'], wins_actexp['Actual Wins'], wins_actexp['Expected Wins']), axis=-1)
+        
+        fig = px.scatter(wins_actexp, x='Expected Wins', y='Actual Wins', hover_name = 'Name')
+        fig.update_traces(customdata=customdata, hovertemplate="Name: %{customdata[0]}<br>Actual Wins: %{customdata[1]}<br>Expected Wins: %{customdata[2]}")
+        fig.add_shape(type='line',
+                x0=0,
+                y0=0,
+                x1=scores['Week'].max() - scores['Week'].min() + 1,
+                y1=scores['Week'].max() - scores['Week'].min() + 1,
+                line=dict(color='Black'),
+                xref='x',
+                yref='y'
+)
+        st.plotly_chart(fig, use_container_width = True)
+        
+    
+        #%%Positional Leaders
         st.header('Positional Leaders')
-        #st.markdown("<h2 style='text-align: center;'>Positional Leaders</h2>", unsafe_allow_html=True)
+
     
         def pos_lead(pos):
             df = data_all[data_all['PlayerRosterSlot'] == pos][['Name', 'PlayerScoreActual']]

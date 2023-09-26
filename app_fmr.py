@@ -97,8 +97,8 @@ st.write("""
 options = st.sidebar.radio('Pages', options = ['PF Summary', 'Power Rankings'])
 
 #Week
-#week_slider = st.sidebar.slider("Select Weeks",
-                        #1, data_all[data_all['PF'] > 0]['Week'].max(), (1, data_all[data_all['PF'] > 0]['Week'].max()))
+week_slider = st.sidebar.slider("Select Weeks", 
+                                1, data_all[data_all['PF'] > 0]['Week'].max(), (1, data_all[data_all['PF'] > 0]['Week'].max()))
                                                
 if options == 'PF Summary':
 
@@ -109,14 +109,14 @@ if options == 'PF Summary':
         options = data_all['Name'].unique(),
         default = list(data_all['Name'].unique()))
     
-    data_all = data_all.loc[(data_all['Name'].isin(name_filter))]
-    #data_all = data_all.loc[(data_all['Name'].isin(name_filter)) & (data_all['Week'].between(week_slider[0], week_slider[1]))]
+    data_all = data_all.loc[(data_all['Name'].isin(name_filter)) & (data_all['Week'].between(week_slider[0], week_slider[1]))]
     
     #%%Coach Rankings
     
     ##Total PF (All Positions) By Team
     total_pf = data_all[data_all['PlayerRosterSlot'] != 'Bench'].groupby('Name')['PlayerScoreActual'].agg('sum').reset_index().sort_values('PlayerScoreActual', ascending=False)
     total_pf.columns = ['Name', 'PF']
+    
     ##Total PF (By Position) By Team
     
     def pos_pf(pos):
@@ -282,8 +282,7 @@ if options == 'PF Summary':
 
 elif options == 'Power Rankings':
     
-    data_all2 = data_all.copy()
-    #data_all2 = data_all.loc[data_all['Week'].between(week_slider[0], week_slider[1])]
+    data_all2 = data_all.loc[data_all['Week'].between(week_slider[0], week_slider[1])]
 #%%Power Rankings
 
 ##Wins/Losses
